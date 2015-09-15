@@ -47,7 +47,7 @@ copyright = u'2014, Open Source Geospatial Foundation'
 # The short X.Y version.
 version = '2.7'
 # The full version, including alpha/beta/rc tags.
-release = '2.7-SNAPSHOT'
+release = '2.7.0'
 # Users don't need to see the "SNAPSHOT" notation when it's there
 if release.find('SNAPSHOT') != -1:
    release = '2.7.x'
@@ -94,8 +94,8 @@ extlinks = {
     'website': ('http://geoserver.org/%s',''),
     'user': ('http://docs.geoserver.org/latest/en/user/%s',''),
     'developer': ('http://docs.geoserver.org/latest/en/developer/%s',''),
-    'geos': ('https://jira.codehaus.org/browse/GEOS-%s','GEOS-'),
-    'geot': ('https://jira.codehaus.org/browse/GEOT-%s','GEOT-')
+    'geos': ('https://osgeo-org.atlassian.net/browse/GEOS-%s','GEOS-'),
+    'geot': ('https://osgeo-org.atlassian.net/browse/GEOT-%s','GEOT-')
 }
 
 # Common substitutions

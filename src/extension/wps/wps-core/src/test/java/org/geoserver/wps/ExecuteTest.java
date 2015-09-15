@@ -1,4 +1,4 @@
-/* (c) 2014 Open Source Geospatial Foundation - all rights reserved
+/* (c) 2014 - 2015 Open Source Geospatial Foundation - all rights reserved
  * (c) 2001 - 2013 OpenPlans
  * This code is licensed under the GPL 2.0 license, available at the root
  * application directory.
@@ -8,10 +8,8 @@ package org.geoserver.wps;
 import static org.custommonkey.xmlunit.XMLAssert.assertXpathEvaluatesTo;
 import static org.custommonkey.xmlunit.XMLAssert.assertXpathExists;
 import static org.geoserver.data.test.MockData.PRIMITIVEGEOFEATURE;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
+import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.junit.Assert.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -43,6 +41,7 @@ import org.geoserver.ows.util.KvpUtils;
 import org.geoserver.platform.GeoServerExtensions;
 import org.geoserver.platform.resource.Resource;
 import org.geoserver.test.RemoteOWSTestSupport;
+import org.geoserver.util.NoExternalEntityResolver;
 import org.geoserver.wps.executor.ExecutionStatus;
 import org.geoserver.wps.executor.ProcessState;
 import org.geoserver.wps.executor.ProcessStatusTracker;
@@ -99,6 +98,56 @@ public class ExecuteTest extends WPSTestSupport {
     }
     
     @Test
+    public void testEntityExpansion() throws Exception { 
+        String xml =  
+          "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>" +
+          "<!DOCTYPE foo [<!ELEMENT foo ANY >\n" + 
+          "  <!ENTITY xxe SYSTEM \"file:///file/not/there\" >]>\n" +
+          "<wps:Execute service='WPS' version='1.0.0' xmlns:wps='http://www.opengis.net/wps/1.0.0' " + 
+              "xmlns:ows='http://www.opengis.net/ows/1.1'>" + 
+            "<ows:Identifier>JTS:buffer</ows:Identifier>" + 
+             "<wps:DataInputs>" + 
+                "<wps:Input>" + 
+                   "<ows:Identifier>distance</ows:Identifier>" + 
+                   "<wps:Data>" + 
+                     "<wps:LiteralData>1</wps:LiteralData>" + 
+                   "</wps:Data>" + 
+                "</wps:Input>" + 
+                "<wps:Input>" + 
+                "<ows:Identifier>&xxe;</ows:Identifier>" + 
+                "<wps:Data>" +
+                  "<wps:ComplexData>" + 
+                    "<gml:Polygon xmlns:gml='http://www.opengis.net/gml'>" +
+                      "<gml:exterior>" + 
+                        "<gml:LinearRing>" + 
+                          "<gml:coordinates>1 1 2 1 2 2 1 2 1 1</gml:coordinates>" + 
+                        "</gml:LinearRing>" + 
+                      "</gml:exterior>" + 
+                    "</gml:Polygon>" +
+                  "</wps:ComplexData>" + 
+                "</wps:Data>" +     
+            "</wps:Input>" + 
+           "</wps:DataInputs>" +
+           "<wps:ResponseForm>" +  
+             "<wps:ResponseDocument storeExecuteResponse='false'>" + 
+               "<wps:Output>" +
+                 "<ows:Identifier>result</ows:Identifier>" +
+               "</wps:Output>" + 
+             "</wps:ResponseDocument>" +
+           "</wps:ResponseForm>" + 
+         "</wps:Execute>";
+        // System.out.println(xml);
+        
+        Document d = postAsDOM( "wps", xml );
+        checkValidationErrors(d);
+        // print(d);
+        
+        String text = xp.evaluate("//ows:ExceptionText", d);
+        assertTrue(text.contains(NoExternalEntityResolver.ERROR_MESSAGE_BASE));
+    }
+    
+    
+    @Test
     public void testDataInline() throws Exception { // Standard Test A.4.4.2, A.4.4.4
         String xml =  
           "<wps:Execute service='WPS' version='1.0.0' xmlns:wps='http://www.opengis.net/wps/1.0.0' " + 
@@ -144,6 +193,56 @@ public class ExecuteTest extends WPSTestSupport {
         assertXpathExists( "/wps:ExecuteResponse/wps:Status/wps:ProcessSucceeded", d);
         assertXpathExists( 
             "/wps:ExecuteResponse/wps:ProcessOutputs/wps:Output/wps:Data/wps:ComplexData/gml:Polygon", d);
+    }
+    
+    @Test
+    public void testCDataOutput() throws Exception { 
+        // @formatter:off
+        String xml = "<wps:Execute service='WPS' version='1.0.0' xmlns:wps='http://www.opengis.net/wps/1.0.0' " + 
+              "xmlns:ows='http://www.opengis.net/ows/1.1'>" + 
+            "<ows:Identifier>JTS:buffer</ows:Identifier>" + 
+             "<wps:DataInputs>" + 
+                "<wps:Input>" + 
+                   "<ows:Identifier>distance</ows:Identifier>" + 
+                   "<wps:Data>" + 
+                     "<wps:LiteralData>1</wps:LiteralData>" + 
+                   "</wps:Data>" + 
+                "</wps:Input>" + 
+                "<wps:Input>" + 
+                "<ows:Identifier>geom</ows:Identifier>" + 
+                "<wps:Data>" +
+                  "<wps:ComplexData>" + 
+                    "<gml:Polygon xmlns:gml='http://www.opengis.net/gml'>" +
+                      "<gml:exterior>" + 
+                        "<gml:LinearRing>" + 
+                          "<gml:coordinates>1 1 2 1 2 2 1 2 1 1</gml:coordinates>" + 
+                        "</gml:LinearRing>" + 
+                      "</gml:exterior>" + 
+                    "</gml:Polygon>" +
+                  "</wps:ComplexData>" + 
+                "</wps:Data>" +     
+            "</wps:Input>" + 
+           "</wps:DataInputs>" +
+           "<wps:ResponseForm>" +  
+             "<wps:ResponseDocument storeExecuteResponse='false'>" + 
+               "<wps:Output mimeType=\"application/wkt\">" +
+                 "<ows:Identifier>result</ows:Identifier>" +
+               "</wps:Output>" + 
+             "</wps:ResponseDocument>" +
+           "</wps:ResponseForm>" + 
+         "</wps:Execute>";
+        // @formatter:on 
+        // System.out.println(xml);
+        
+        Document d = postAsDOM( "wps", xml );
+        // print(d);
+        checkValidationErrors(d);
+        
+        assertEquals( "wps:ExecuteResponse", d.getDocumentElement().getNodeName() );
+        
+        assertXpathExists( "/wps:ExecuteResponse/wps:Status/wps:ProcessSucceeded", d);
+        String wkt = xp.evaluate("/wps:ExecuteResponse/wps:ProcessOutputs/wps:Output/wps:Data/wps:ComplexData", d);
+        assertThat(new WKTReader().read(wkt), instanceOf(Polygon.class));
     }
     
     @Test
@@ -853,6 +952,41 @@ public class ExecuteTest extends WPSTestSupport {
     }
     
     @Test
+    public void testNoResponseForm() throws Exception {
+        String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><wps:Execute xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:wps=\"http://www.opengis.net/wps/1.0.0\" xmlns:ows=\"http://www.opengis.net/ows/1.1\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" service=\"WPS\" version=\"1.0.0\">\n" + 
+                "  <ows:Identifier>JTS:area</ows:Identifier>\n" + 
+                "  <wps:DataInputs>\n" + 
+                "    <wps:Input>\n" + 
+                "      <ows:Identifier>geom</ows:Identifier>\n" + 
+                "      <wps:Reference xlink:href=\"http://geoserver/wps\" method=\"POST\" mimeType=\"application/xml\">\n" + 
+                "        <wps:Execute service=\"WPS\" version=\"1.0.0\">\n" + 
+                "          <ows:Identifier>JTS:union</ows:Identifier>\n" + 
+                "          <wps:DataInputs>\n" + 
+                "            <wps:Input>\n" + 
+                "              <ows:Identifier>geom</ows:Identifier>\n" + 
+                "              <wps:Data>\n" + 
+                "                <wps:ComplexData mimeType=\"application/wkt\"><![CDATA[POLYGON((20 10, 30 0, 40 10, 30 20, 20 10))]]></wps:ComplexData>\n" + 
+                "              </wps:Data>\n" + 
+                "            </wps:Input>\n" + 
+                "            <wps:Input>\n" + 
+                "              <ows:Identifier>geom</ows:Identifier>\n" + 
+                "              <wps:Data>\n" + 
+                "                <wps:ComplexData mimeType=\"application/wkt\"><![CDATA[POLYGON((2 1, 3 0, 4 1, 3 2, 2 1))]]></wps:ComplexData>\n" + 
+                "              </wps:Data>\n" + 
+                "            </wps:Input>\n" + 
+                "          </wps:DataInputs>\n" + 
+                "        </wps:Execute>\n" + 
+                "\n" + 
+                "      </wps:Reference>\n" + 
+                "    </wps:Input>\n" + 
+                "  </wps:DataInputs>\n" + 
+                "</wps:Execute>";
+        
+        Document dom = postAsDOM(root(), xml);
+        print(dom);
+    }
+    
+    @Test
     public void testProcessChainingKVP() throws Exception {
         String nested = "http://geoserver/wps?service=WPS&version=1.0.0&request=Execute&Identifier=JTS:buffer" +
         "&DataInputs=" + urlEncode("geom=POINT(0 0)@mimetype=application/wkt;distance=10") + "&RawDataOutput=result";
@@ -980,13 +1114,13 @@ public class ExecuteTest extends WPSTestSupport {
         Document dom = postAsDOM("wfs", request);
         String statusLocation = getStatusLocation(dom);
 
-        MonkeyProcess.progress("chained-monkey", 10f, false);
+        MonkeyProcess.progress("chained-monkey", 10f, true);
         dom = getAsDOM(statusLocation);
         // print(dom);
         assertXpathExists("//wps:ProcessStarted", dom);
         assertXpathEvaluatesTo("3", "//wps:ProcessStarted/@percentCompleted", dom);
 
-        MonkeyProcess.progress("chained-monkey", 50f, false);
+        MonkeyProcess.progress("chained-monkey", 50f, true);
         dom = getAsDOM(statusLocation);
         // print(dom);
         assertXpathExists("//wps:ProcessStarted", dom);
