@@ -17,7 +17,62 @@
   <packaging>jar</packaging>
   <version>2.7.1</version>
   <name>GeoServer Web Application</name>    
+
+
+
+<repositories>
+        <repository>
+            <id>sistema-release</id>
+            <name>SISTeMA Release repository</name>
+            <url>http://maven.sistemaits.com/nexus/content/repositories/sistema-release/</url>
+        </repository>
+        <repository>
+            <id>sistema-snapshot</id>
+            <name>SISTeMA SNAPSHOT repository</name>
+            <url>http://maven.sistemaits.com/nexus/content/repositories/sistema-snapshot/</url>
+        </repository>
+        <repository>
+            <id>sistema-thirdparty</id>
+            <name>SISTeMA Third party packages repository</name>
+            <url>http://maven.sistemaits.com/nexus/content/repositories/sistema-thirdparty/</url>
+        </repository>
+ </repositories>
+ <pluginRepositories>
+    <pluginRepository>
+        <id>sistema-release</id>
+        <name>SISTeMA Release repository</name>
+        <url>http://maven.sistemaits.com/nexus/content/repositories/sistema-release/</url>
+    </pluginRepository>
+    <pluginRepository>
+        <id>sistema-snapshot</id>
+        <name>SISTeMA SNAPSHOT repository</name>
+        <url>http://maven.sistemaits.com/nexus/content/repositories/sistema-snapshot/</url>
+    </pluginRepository>
+</pluginRepositories>
+<distributionManagement>
+   <snapshotRepository>
+      <id>sistema-snapshot</id>
+      <url>http://maven.sistemaits.com/nexus/content/repositories/sistema-snapshot</url>
+   </snapshotRepository>
+   <repository>
+      <id>sistema-release</id>
+      <url>http://maven.sistemaits.com/nexus/content/repositories/sistema-release</url>
+   </repository>
+</distributionManagement>
+    
   <dependencies>  
+    <dependency>
+    <groupId>org.geotools.jdbc</groupId>
+    <artifactId>gt-jdbc-oracle</artifactId>
+    <version>${gt.version}</version>
+   </dependency>
+   <dependency>
+    <groupId>org.geotools.jdbc</groupId>
+    <artifactId>gt-jdbc-sqlserver</artifactId>
+    <version>${gt.version}</version>
+   </dependency>
+   
+   
     <dependency>
       <groupId>org.geoserver.web</groupId>
       <artifactId>gs-web-core</artifactId>
@@ -58,7 +113,7 @@
       <artifactId>gs-web-sec-ldap</artifactId>
       <version>${project.version}</version>
     </dependency>
-	<dependency>
+  <dependency>
       <groupId>org.geoserver.web</groupId>
       <artifactId>gs-web-rest</artifactId>
       <version>${project.version}</version>
@@ -189,9 +244,47 @@
       <artifactId>xmlunit</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+    <groupId>com.sistemaits.optima</groupId>
+    <artifactId>fluxomajic3</artifactId>
+    <version>3.0.0-SNAPSHOT</version>
+    <scope>compile</scope>
+  </dependency>
+  <dependency>
+    <groupId>com.sistemaits.optima</groupId>
+    <artifactId>optima-geodao</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+    <scope>compile</scope>
+  </dependency>
   </dependencies>
+  
+  
   <build>
+  
+  <pluginManagement>                 <!--  aggiunto -->
     <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>cobertura-maven-plugin</artifactId>
+        <version>2.6</version>
+      </plugin>
+      
+      <plugin>
+        <artifactId>maven-deploy-plugin</artifactId>
+        <configuration>
+    <skip>false</skip>
+        </configuration>
+      </plugin>
+      
+    </plugins>
+  </pluginManagement>
+    <plugins>
+    
+    
+
+  
+
+
       <!-- Builds a valid data directory into the web app -->
       <plugin>
         <artifactId>maven-antrun-plugin</artifactId>
@@ -256,6 +349,20 @@
           </execution>
         </executions>
       </plugin-->
+      
+<!--       <plugin>  -->
+<!--       <artifactId>maven-deploy-plugin</artifactId>   aggiunto  -->
+<!--      <executions> -->
+<!--       <execution> -->
+<!--        <id>deploy</id> -->
+<!--        <phase>deploy</phase> -->
+<!--        <goals> -->
+<!--          <goal>deploy</goal> -->
+<!--        </goals> -->
+<!--       </execution> -->
+<!--      </executions> -->
+<!--    </plugin> -->
+
       <plugin>
         <groupId>org.mortbay.jetty</groupId>
         <artifactId>maven-jetty-plugin</artifactId>
@@ -279,61 +386,60 @@
           -->
         </configuration>
       </plugin>
-	  <plugin>
-		<inherited>true</inherited>
-		<groupId>org.apache.maven.plugins</groupId>
-		<artifactId>maven-war-plugin</artifactId>
+    <plugin>
+    <inherited>true</inherited>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-war-plugin</artifactId>
         <version>2.3</version>
-		<configuration>
-			<warName>geoserver</warName>
-			<webappDirectory>${project.build.directory}/geoserver</webappDirectory>
-			<packagingExcludes>WEB-INF/lib/servlet-api*.jar</packagingExcludes>
-			<archive>
-				<manifest>
-					<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-					<addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-				</manifest>
-				<manifestEntries>
-					<GeoServerModule>core</GeoServerModule>
-					<Application-Name>${project.build.finalname}</Application-Name>
-					<Project-Version>${project.version}</Project-Version>
-					<Iteration-Name>${iteration}</Iteration-Name>
-					<Build-Timestamp>${maven.build.timestamp}</Build-Timestamp>
-					<Git-Revision>${build.commit.id}</Git-Revision>
-				</manifestEntries>
-			</archive>
-		</configuration>
-		<executions>
-			<execution>
-				<phase>package</phase>
-				<goals>
-					<goal>war</goal>
-				</goals>
-			</execution>
-		</executions>
-	</plugin>
-	<plugin>
-		<groupId>org.codehaus.mojo</groupId>
-		<artifactId>build-helper-maven-plugin</artifactId>
-		<version>1.8</version>
-		<executions>
-			<execution>
-				<id>attach-war</id>
-				<phase>package</phase>
-				<goals>
-					<goal>attach-artifact</goal>
-				</goals>
-				<configuration>
-					<artifacts>
-						<artifact>
-							<file>${project.build.directory}/geoserver.war</file>
-							<type>war</type>
-						</artifact>
-					</artifacts>
-				</configuration>
-			</execution>
-		</executions>
-	</plugin>
+    <configuration>
+      <warName>geoserver</warName>
+      <webappDirectory>${project.build.directory}/geoserver</webappDirectory>
+      <archive>
+        <manifest>
+          <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+          <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+        </manifest>
+        <manifestEntries>
+          <GeoServerModule>core</GeoServerModule>
+          <Application-Name>${project.build.finalname}</Application-Name>
+          <Project-Version>${project.version}</Project-Version>
+          <Iteration-Name>${iteration}</Iteration-Name>
+          <Build-Timestamp>${maven.build.timestamp}</Build-Timestamp>
+          <Git-Revision>${build.commit.id}</Git-Revision>
+        </manifestEntries>
+      </archive>
+    </configuration>
+    <executions>
+      <execution>
+        <phase>package</phase>
+        <goals>
+          <goal>war</goal>
+        </goals>
+      </execution>
+    </executions>
+  </plugin>
+<!--  <plugin> -->
+<!--    <groupId>org.codehaus.mojo</groupId> -->
+<!--    <artifactId>build-helper-maven-plugin</artifactId> -->
+<!--    <version>1.8</version> -->
+<!--    <executions> -->
+<!--      <execution> -->
+<!--        <id>attach-war</id> -->
+<!--        <phase>package</phase> -->
+<!--        <goals> -->
+<!--          <goal>attach-artifact</goal> -->
+<!--        </goals> -->
+<!--        <configuration> -->
+<!--          <artifacts> -->
+<!--            <artifact> -->
+<!--              <file>${project.build.directory}/geoserver.war</file> -->
+<!--              <type>war</type> -->
+<!--            </artifact> -->
+<!--          </artifacts> -->
+<!--        </configuration> -->
+<!--      </execution> -->
+<!--    </executions> -->
+<!--  </plugin> -->
     </plugins>
   </build>
   
@@ -344,6 +450,7 @@
     <sde.version>9.3</sde.version>
     <jetty.port>8080</jetty.port>
     <jetty.run.daemon>false</jetty.run.daemon>
+<!--     <maven.plugin.deploy.version>2.8.2</maven.plugin.deploy.version> -->
   </properties>
 
   <profiles>
@@ -358,16 +465,28 @@
     <profile>
       <id>kml</id>
       <dependencies>
-        <dependency>
-          <groupId>org.geotools</groupId>
-          <artifactId>gt-kml</artifactId> 
-	  <version>${gt.version}</version>
-        </dependency>
+  <dependency>
+    <groupId>com.sistemaits.optima</groupId>
+    <artifactId>fluxomajic3</artifactId>
+    <version>3.0.0-SNAPSHOT</version>
+  </dependency>
+    <dependency>
+    <groupId>com.sistemaits.optima</groupId>
+    <artifactId>optima-geodao</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+  </dependency>
+
+  <dependency>
+    <groupId>org.geotools</groupId>
+    <artifactId>gt-kml</artifactId>
+    <version>${gt.version}</version>
+  </dependency>
       </dependencies>
     </profile>
     <profile>
       <id>arcsde</id>
       <dependencies>
+   
         <dependency>
           <groupId>org.geoserver.extension</groupId>
           <artifactId>gs-arcsde</artifactId>
@@ -416,6 +535,7 @@
             <groupId>com.oracle</groupId>
             <artifactId>ojdbc14</artifactId>
             <version>10.2.0.3.0</version>
+            <scope>provided</scope>
         </dependency>
       </dependencies>
     </profile>
@@ -863,7 +983,7 @@
           <artifactId>gs-csw-core</artifactId>
           <version>${project.version}</version>
         </dependency>
-	<dependency>
+  <dependency>
           <groupId>org.geoserver.csw</groupId>
           <artifactId>gs-web-csw</artifactId>
           <version>${project.version}</version>
@@ -993,7 +1113,7 @@
           <version>${project.version}</version>
         </dependency>
       </dependencies>
-    </profile>	
+    </profile>  
     <profile>
       <id>wcs2_0-eo</id>
       <dependencies>
@@ -1039,7 +1159,7 @@
           <version>${gs.version}</version>
         </dependency>
       </dependencies>
-		</profile>        
+    </profile>        
     <profile>
       <id>importer</id>
       <dependencies>
@@ -1099,7 +1219,7 @@
       <id>geoserver-sync</id>
       <dependencies>
         <dependency>
-	  <groupId>org.geoserver.community</groupId>
+    <groupId>org.geoserver.community</groupId>
           <artifactId>geoserver-sync-server</artifactId>
           <version>${project.version}</version>
         </dependency>
@@ -1131,75 +1251,75 @@
         <dependency>
           <groupId>org.geoserver.community</groupId>
           <artifactId>gs-dyndimension</artifactId>
-		  <version>${project.version}</version>
+      <version>${project.version}</version>
         </dependency>
       </dependencies>
     </profile>
-	<profile>
+  <profile>
       <id>rest-ext</id>
       <dependencies>
         <dependency>
           <groupId>org.geoserver.community</groupId>
           <artifactId>gs-rest-ext</artifactId>
-		  <version>${project.version}</version>
+      <version>${project.version}</version>
         </dependency>
       </dependencies>
     </profile>
-	<profile>
+  <profile>
       <id>wps-download</id>
       <dependencies>
         <dependency>
           <groupId>org.geoserver.community</groupId>
           <artifactId>gs-wps-download</artifactId>
-		  <version>${project.version}</version>
+      <version>${project.version}</version>
         </dependency>
       </dependencies>
     </profile>    
-	<profile>
+  <profile>
       <id>kmlppio</id>
       <dependencies>
         <dependency>
           <groupId>org.geoserver.community</groupId>
           <artifactId>gs-kmlppio</artifactId>
-		  <version>${project.version}</version>
+      <version>${project.version}</version>
         </dependency>
       </dependencies>
     </profile>
-	<profile>
+  <profile>
       <id>gpxppio</id>
       <dependencies>
         <dependency>
           <groupId>org.geoserver.community</groupId>
           <artifactId>gs-gpxppio</artifactId>
-		  <version>${project.version}</version>
+      <version>${project.version}</version>
         </dependency>
       </dependencies>
     </profile>
-	<profile>
+  <profile>
       <id>solr</id>
       <dependencies>
         <dependency>
-		  <groupId>org.geoserver.community</groupId>
-		  <artifactId>gs-web-solr</artifactId>
-		  <version>${project.version}</version>
+      <groupId>org.geoserver.community</groupId>
+      <artifactId>gs-web-solr</artifactId>
+      <version>${project.version}</version>
         </dependency>
       </dependencies>
    </profile>
    <profile>
-	<id>jms-cluster</id>
-	<dependencies>
-		<dependency>
-			<groupId>org.geoserver</groupId>
-			<artifactId>gs-jms-commons</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.geoserver</groupId>
-			<artifactId>gs-jms-geoserver</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-	</dependencies>
-	</profile>	
+  <id>jms-cluster</id>
+  <dependencies>
+    <dependency>
+      <groupId>org.geoserver</groupId>
+      <artifactId>gs-jms-commons</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.geoserver</groupId>
+      <artifactId>gs-jms-geoserver</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+  </dependencies>
+  </profile>  
     <profile>
       <id>geofence</id>
       <dependencies>
@@ -1221,4 +1341,6 @@
       </dependencies>
     </profile>
  </profiles>
+
+  
 </project>

@@ -854,7 +854,17 @@
     <groupId>log4j</groupId>
     <artifactId>log4j</artifactId>
     <version>1.2.14</version>
+    <scope>provided</scope>
    </dependency>
+   
+   <dependency>
+	<groupId>postgresql</groupId>
+	<artifactId>postgresql</artifactId>
+	<version>8.4-701.jdbc3</version>
+	<scope>provided</scope>
+   </dependency>
+   
+   
    <dependency>
     <groupId>com.lowagie</groupId>
     <artifactId>itext</artifactId>
