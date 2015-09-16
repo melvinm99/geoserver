@@ -23,7 +23,7 @@ import java.util.logging.Level;
 
 import javax.media.jai.Interpolation;
 import javax.servlet.http.HttpServletRequest;
-
+import org.geoserver.util.EntityResolverProvider;
 import org.apache.commons.collections.EnumerationUtils;
 import org.geoserver.catalog.DimensionInfo;
 import org.geoserver.catalog.LayerGroupInfo;
