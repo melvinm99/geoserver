@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
+import org.geoserver.util.EntityResolverProvider;
 
 import javax.media.jai.Interpolation;
 import javax.servlet.http.HttpServletRequest;
