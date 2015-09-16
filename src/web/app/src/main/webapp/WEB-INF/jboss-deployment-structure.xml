@@ -1,0 +1,23 @@
+<jboss-deployment-structure>
+ 
+ <deployment>
+  <dependencies>
+  	<module name="deployment.optima-wsi.war">
+		<imports>
+			<exclude path="**" />	<!-- Explicitly exclude all dependencies -->
+		</imports>
+	</module>		
+   <module name="com.sistemaits.optima"/>
+   <module name="org.postgis"/>
+   <module name="com.oracle.ojdbc14"/><!--oppure 7?-->
+   <system>
+    <paths>
+     <path name="com/sun/imageio/spi"/>
+     <path name="com/sun/imageio/plugins/common"/>
+    </paths>
+   </system>
+  </dependencies>
+ </deployment>
+ 
+</jboss-deployment-structure>
+
