@@ -2,6 +2,11 @@
 <!DOCTYPE web-app PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN" "http://java.sun.com/dtd/web-app_2_3.dtd">
 <web-app>
     <display-name>GeoServer</display-name>
+    
+    <context-param> 
+        <param-name>RELINQUISH_LOG4J_CONTROL</param-name> 
+        <param-value>true</param-value> 
+    </context-param>
   
       <context-param>
     <param-name>serviceStrategy</param-name>
@@ -23,7 +28,7 @@
          FILE
          - outputs to the local filesystem first, before sending it off to the user
       -->
-    <param-value>PARTIAL-BUFFER2</param-value>
+    <param-value>SPEED</param-value>
   </context-param>
   
   <!-- If true, enable versioning datastore as well -->
@@ -55,12 +60,10 @@
     </context-param>
      -->
    
-     <!--
     <context-param>
        <param-name>GEOSERVER_DATA_DIR</param-name>
-        <param-value>C:\eclipse\workspace\geoserver_trunk\cite\confCiteWFSPostGIS</param-value>
+        <param-value>../standalone/configuration/geoserver_data</param-value>
     </context-param> 
-   -->
     
     <!-- pick up all spring application contexts -->
     <context-param>
@@ -114,7 +117,7 @@
               parameter defaults to false.
               -->
          <param-name>enabled</param-name>
-         <param-value>true</param-value>
+         <param-value>false</param-value>
      </init-param>
      <init-param>
      <!-- The 'log-request-bodies' parameter is a boolean value, "true" (case-insensitive) for
@@ -125,7 +128,7 @@
           server.
           -->
      <param-name>log-request-bodies</param-name>
-     <param-value>true</param-value>
+     <param-value>false</param-value>
      </init-param>
    </filter>
    
@@ -160,6 +163,26 @@
      -->
    </filter>
 
+   <!-- OPTIMA Authentication -->
+    <filter>
+        <filter-name>OptimaFilter</filter-name>
+        <filter-class>com.sistemaits.optima.utils.servlet.BasicOptimaServletFilter</filter-class>
+    </filter>
+    <filter>
+          <filter-name>ServletAuthFilter</filter-name>
+          <filter-class>com.sistemaits.optima.auth.interceptors.ServletAuthFilter</filter-class>
+          <init-param>
+              <param-name>auth-manager</param-name>
+              <param-value>java:global/optima-wsi/OptimaAuthManager</param-value>
+          </init-param>
+          <init-param>
+              <param-name>exclude-urls</param-name>
+              <!--<param-value>/web;/j_spring_security_check;/j_spring_security_logout;/gwc"</param-value>-->
+        <param-value>/keepme</param-value>
+          </init-param>       
+      </filter>
+    <!-- OPTIMA Authentication -->
+
     <!-- 
       THIS FILTER MUST BE THE FIRST ONE, otherwise we end up with ruined chars in the input from the GUI
       See the "Note" in the Tomcat character encoding guide:
@@ -169,6 +192,17 @@
       <filter-name>Set Character Encoding</filter-name>
       <url-pattern>/*</url-pattern>
     </filter-mapping>
+
+    <!-- OPTIMA Authentication -->
+    <filter-mapping>
+          <filter-name>OptimaFilter</filter-name>
+          <url-pattern>/*</url-pattern>
+      </filter-mapping>
+    <filter-mapping>
+          <filter-name>ServletAuthFilter</filter-name>
+          <url-pattern>/*</url-pattern>
+      </filter-mapping>
+    <!-- OPTIMA Authentication -->
    
     <filter-mapping>
       <filter-name>FlushSafeFilter</filter-name>
@@ -258,5 +292,9 @@
     <welcome-file-list>
         <welcome-file>index.html</welcome-file>
     </welcome-file-list>
-    
+        <ejb-ref>
+        <ejb-ref-name>ejb/OptimaConfigurator</ejb-ref-name>
+        <ejb-ref-type>Session</ejb-ref-type>
+        <mapped-name>java:global/optima-wsi/OptimaConfigurator</mapped-name>
+    </ejb-ref>
 </web-app>
